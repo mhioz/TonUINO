@@ -23,8 +23,14 @@
 // uncomment the below line to stop playback when card is removed
 //#define PAUSEONCARDREMOVAL
 
+// uncomment the below line to enable potentiometer for volume control
+#define VOLUMEPOTENTIOMETER
+
 // delay for volume buttons
 #define LONG_PRESS_DELAY 300
+
+// uncomment the below line to flip the shutdown pin logic
+// #define POLOLUSWITCH
 
 static const uint32_t cardCookie = 322417479;
 
@@ -35,6 +41,11 @@ uint16_t currentTrack;
 uint16_t firstTrack;
 uint8_t queue[255];
 uint8_t volume;
+
+#ifdef VOLUMEPOTENTIOMETER
+uint8_t lastvolume = 99;
+#endif
+
 
 struct folderSettings {
   uint8_t folder;
@@ -650,7 +661,11 @@ MFRC522::StatusCode status;
 #define buttonDown A2
 #define busyPin 4
 #define shutdownPin 7
-#define openAnalogPin A7
+#define openAnalogPin A6
+
+#ifdef VOLUMEPOTENTIOMETER
+#define volumeADC A7
+#endif
 
 #ifdef FIVEBUTTONS
 #define buttonFourPin A3
@@ -694,7 +709,11 @@ void checkStandbyAtMillis() {
   if (sleepAtMillis != 0 && millis() > sleepAtMillis) {
     Serial.println(F("=== power off!"));
     // enter sleep state
-    digitalWrite(shutdownPin, HIGH);
+#if defined POLOLUSWITCH
+        digitalWrite(shutdownPin, HIGH);
+#else
+        digitalWrite(shutdownPin, LOW);
+#endif
     delay(500);
 
     // http://discourse.voss.earth/t/intenso-s10000-powerbank-automatische-abschaltung-software-only/805
@@ -760,8 +779,17 @@ void setup() {
   mp3.begin();
   // Zwei Sekunden warten bis der DFPlayer Mini initialisiert ist
   delay(2000);
+  
+#ifdef VOLUMEPOTENTIOMETER
+  pinMode(volumeADC, INPUT); 
+  CheckVolume();
+#endif
+#ifndef VOLUMEPOTENTIOMETER
   volume = mySettings.initVolume;
   mp3.setVolume(volume);
+#endif
+  
+  
   mp3.setEq(DfMp3_Eq(mySettings.eq - 1));
   // Fix für das Problem mit dem Timeout (ist jetzt in Upstream daher nicht mehr nötig!)
   //mySoftwareSerial.setTimeout(10000);
@@ -783,7 +811,11 @@ void setup() {
   pinMode(buttonFivePin, INPUT_PULLUP);
 #endif
   pinMode(shutdownPin, OUTPUT);
+#if defined POLOLUSWITCH
   digitalWrite(shutdownPin, LOW);
+#else
+  digitalWrite(shutdownPin, HIGH);
+#endif
 
 
   // RESET --- ALLE DREI KNÖPFE BEIM STARTEN GEDRÜCKT HALTEN -> alle EINSTELLUNGEN werden gelöscht
@@ -811,7 +843,25 @@ void readButtons() {
 #endif
 }
 
+#ifdef VOLUMEPOTENTIOMETER
+void CheckVolume() {
+  if (activeModifier != NULL) {
+    if (activeModifier->handleVolumeUp() == true) return;
+    if (activeModifier->handleVolumeDown() == true) return;    
+  }
+
+  volume = map( analogRead(volumeADC), 0, 1023, mySettings.minVolume, mySettings.maxVolume);
+  if( abs(volume-lastvolume) >1){
+    mp3.setVolume( volume );
+    lastvolume= volume;
+    Serial.println(F(" = Volume"));
+    Serial.println( volume );
+  }
+}
+#endif
+
 void volumeUpButton() {
+#ifndef VOLUMEPOTENTIOMETER
   if (activeModifier != NULL)
     if (activeModifier->handleVolumeUp() == true)
       return;
@@ -823,9 +873,11 @@ void volumeUpButton() {
     delay(LONG_PRESS_DELAY);
   }
   Serial.println(volume);
+#endif
 }
 
 void volumeDownButton() {
+#ifndef VOLUMEPOTENTIOMETER
   if (activeModifier != NULL)
     if (activeModifier->handleVolumeDown() == true)
       return;
@@ -837,6 +889,7 @@ void volumeDownButton() {
     delay(LONG_PRESS_DELAY);
   }
   Serial.println(volume);
+#endif
 }
 
 void nextButton() {
@@ -988,6 +1041,9 @@ void loop() {
     // Buttons werden nun über JS_Button gehandelt, dadurch kann jede Taste
     // doppelt belegt werden
     readButtons();
+#ifdef VOLUMEPOTENTIOMETER
+    CheckVolume();
+#endif    
 
     // admin menu
     if ((pauseButton.pressedFor(LONG_PRESS) || upButton.pressedFor(LONG_PRESS) || downButton.pressedFor(LONG_PRESS)) && pauseButton.isPressed() && upButton.isPressed() && downButton.isPressed()) {
@@ -1442,6 +1498,9 @@ uint8_t voiceMenu(int numberOfOptions, int startMessage, int messageOffset,
         return optionSerial;
     }
     readButtons();
+#ifdef VOLUMEPOTENTIOMETER
+    CheckVolume();
+#endif
     mp3.loop();
     if (pauseButton.pressedFor(LONG_PRESS)) {
       mp3.playMp3FolderTrack(802);
