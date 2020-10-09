@@ -46,6 +46,7 @@ uint8_t volume;
 uint8_t lastvolume = 99;
 #endif
 
+bool ignoreButtons = false;
 
 struct folderSettings {
   uint8_t folder;
@@ -88,6 +89,7 @@ adminSettings mySettings;
 nfcTagObject myCard;
 folderSettings *myFolder;
 unsigned long sleepAtMillis = 0;
+unsigned long ignorePressAtMillis = 0;
 static uint16_t _lastTrackFinished;
 
 static void nextTrack(uint16_t track);
@@ -552,7 +554,19 @@ static void nextTrack(uint16_t track) {
 
   Serial.println(F("=== nextTrack()"));
 
-  if (myFolder->mode == 1 || myFolder->mode == 7) {
+  if (myFolder->mode == 1) {
+    if (currentTrack != numTracksInFolder && ignoreButtons == false) {
+      currentTrack = currentTrack + 1;
+      mp3.playFolderTrack(myFolder->folder, currentTrack);
+      Serial.print(F("Hörspielmodus: Auswahlzeit aktiv -> nächster Track: "));
+      Serial.print(currentTrack);
+    } else
+        Serial.println(F("Hörspielmodus: Auswahlzeit abgelaufen -> keinen neuen Track spielen"));
+        setstandbyTimer();     
+      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+    { }
+  }
+  if (myFolder->mode == 7) {
     Serial.println(F("Hörspielmodus ist aktiv -> keinen neuen Track spielen"));
     setstandbyTimer();
     //    mp3.sleep(); // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
@@ -609,10 +623,23 @@ static void nextTrack(uint16_t track) {
 
 static void previousTrack() {
   Serial.println(F("=== previousTrack()"));
-  /*  if (myCard.mode == 1 || myCard.mode == 7) {
-      Serial.println(F("Hörspielmodus ist aktiv -> Track von vorne spielen"));
-      mp3.playFolderTrack(myCard.folder, currentTrack);
-    }*/
+  if (myFolder->mode == 1) {
+    if (currentTrack != firstTrack && ignoreButtons == false) {
+      currentTrack = currentTrack - 1;
+      mp3.playFolderTrack(myFolder->folder, currentTrack);
+      Serial.print(F("Hörspielmodus: Auswahlzeit aktiv -> vorheriger Track: "));
+      Serial.print(currentTrack);
+    } else
+        Serial.println(F("Hörspielmodus: Auswahlzeit abgelaufen -> keinen neuen Track spielen"));
+        setstandbyTimer();     
+      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+    { }
+  }
+  if (myFolder->mode == 7) {
+    Serial.println(F("Hörspielmodus ist aktiv -> keinen neuen Track spielen"));
+    setstandbyTimer();
+    //    mp3.sleep(); // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+  }
   if (myFolder->mode == 2 || myFolder->mode == 8) {
     Serial.println(F("Albummodus ist aktiv -> vorheriger Track"));
     if (currentTrack != firstTrack) {
@@ -694,6 +721,11 @@ bool ignoreButtonFour = false;
 bool ignoreButtonFive = false;
 #endif
 
+/// Timer zum deaktivieren der Tasten
+void setButtonTimer() {
+    ignorePressAtMillis = millis() + (60 * 1000); //1min
+}
+
 /// Funktionen für den Standby Timer (z.B. über Pololu-Switch oder Mosfet)
 
 void setstandbyTimer() {
@@ -730,6 +762,14 @@ void checkStandbyAtMillis() {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     cli();  // Disable interrupts
     sleep_mode();
+  }
+}
+
+void checkIgnorePressAtMillis() {
+  if (ignorePressAtMillis != 0 && millis() > ignorePressAtMillis) {
+    ignoreButtons=true;
+  } else {
+    ignoreButtons=false;
   }
 }
 
@@ -1036,6 +1076,7 @@ void loop() {
 #endif
 
     checkStandbyAtMillis();
+    checkIgnorePressAtMillis();
     mp3.loop();
 
     // Modifier : WIP!
