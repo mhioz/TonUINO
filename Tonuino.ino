@@ -27,7 +27,6 @@
 #define VOLUMEPOTENTIOMETER
 
 // delay for volume buttons
-#define LONG_PRESS_DELAY 300
 
 // uncomment the below line to flip the shutdown pin logic
 // #define POLOLUSWITCH
@@ -46,7 +45,7 @@ uint8_t volume;
 uint8_t lastvolume = 99;
 #endif
 
-bool ignoreButtons = false;
+bool ignoreButtons = true;
 
 struct folderSettings {
   uint8_t folder;
@@ -558,10 +557,8 @@ static void nextTrack(uint16_t track) {
     if (currentTrack != numTracksInFolder && ignoreButtons == false) {
       currentTrack = currentTrack + 1;
       mp3.playFolderTrack(myFolder->folder, currentTrack);
-      Serial.print(F("Hörspielmodus: Auswahlzeit aktiv -> nächster Track: "));
-      Serial.print(currentTrack);
+      setButtonTimer();
     } else
-        Serial.println(F("Hörspielmodus: Auswahlzeit abgelaufen -> keinen neuen Track spielen"));
         setstandbyTimer();     
       //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
     { }
@@ -627,10 +624,8 @@ static void previousTrack() {
     if (currentTrack != firstTrack && ignoreButtons == false) {
       currentTrack = currentTrack - 1;
       mp3.playFolderTrack(myFolder->folder, currentTrack);
-      Serial.print(F("Hörspielmodus: Auswahlzeit aktiv -> vorheriger Track: "));
-      Serial.print(currentTrack);
+      setButtonTimer();
     } else
-        Serial.println(F("Hörspielmodus: Auswahlzeit abgelaufen -> keinen neuen Track spielen"));
         setstandbyTimer();     
       //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
     { }
@@ -721,11 +716,22 @@ bool ignoreButtonFour = false;
 bool ignoreButtonFive = false;
 #endif
 
+
 /// Timer zum deaktivieren der Tasten
 void setButtonTimer() {
-    ignorePressAtMillis = millis() + (60 * 1000); //1min
+      Serial.println(F("=== setButtonTimer"));
+      Serial.println(ignorePressAtMillis);
 }
 
+void checkIgnorePressAtMillis() {
+  //Serial.println(F("check"));
+  if (ignorePressAtMillis != 0 && millis() > ignorePressAtMillis) {
+        ignoreButtons=true;
+  } else {
+        ignoreButtons=false;
+  //Serial.println(F("läuft"));
+  }
+}
 /// Funktionen für den Standby Timer (z.B. über Pololu-Switch oder Mosfet)
 
 void setstandbyTimer() {
@@ -762,14 +768,6 @@ void checkStandbyAtMillis() {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     cli();  // Disable interrupts
     sleep_mode();
-  }
-}
-
-void checkIgnorePressAtMillis() {
-  if (ignorePressAtMillis != 0 && millis() > ignorePressAtMillis) {
-    ignoreButtons=true;
-  } else {
-    ignoreButtons=false;
   }
 }
 
@@ -970,6 +968,7 @@ void playFolder() {
   if (myFolder->mode == 1) {
     Serial.println(F("Hörspielmodus -> zufälligen Track wiedergeben"));
     currentTrack = random(1, numTracksInFolder + 1);
+    setButtonTimer();
     Serial.println(currentTrack);
     mp3.playFolderTrack(myFolder->folder, currentTrack);
   }
@@ -981,8 +980,7 @@ void playFolder() {
   }
   // Party Modus: Ordner in zufälliger Reihenfolge
   if (myFolder->mode == 3) {
-    Serial.println(
-      F("Party Modus -> Ordner in zufälliger Reihenfolge wiedergeben"));
+    Serial.println(F("Party Modus -> Ordner in zufälliger Reihenfolge wiedergeben"));
     shuffleQueue();
     currentTrack = 1;
     mp3.playFolderTrack(myFolder->folder, queue[currentTrack - 1]);
@@ -1076,7 +1074,6 @@ void loop() {
 #endif
 
     checkStandbyAtMillis();
-    checkIgnorePressAtMillis();
     mp3.loop();
 
     // Modifier : WIP!
@@ -1090,6 +1087,7 @@ void loop() {
 #ifdef VOLUMEPOTENTIOMETER
     CheckVolume();
 #endif    
+    checkIgnorePressAtMillis();
 
     // admin menu
     if ((pauseButton.pressedFor(LONG_PRESS) || upButton.pressedFor(LONG_PRESS) || downButton.pressedFor(LONG_PRESS)) && pauseButton.isPressed() && upButton.isPressed() && downButton.isPressed()) {
