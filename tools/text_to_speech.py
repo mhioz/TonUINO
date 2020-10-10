@@ -1,40 +1,3 @@
-
-Skip to content
-Pull requests
-Issues
-Marketplace
-Explore
-@mhioz
-Learn Git and GitHub without any code!
-
-Using the Hello World guide, you’ll start a branch, write comments, and open a pull request.
-seisfeld /
-TonUINO
-forked from xfjx/TonUINO
-
-22
-65
-
-    231
-
-Code
-Issues
-Pull requests 1
-Actions
-Security
-
-    Insights
-
-TonUINO/tools/text_to_speech.py /
-@juamiso
-juamiso adds spanish speech file + updates text_to_speech.py (#21)
-Latest commit 718f71c on 14 Jun
-History
-3 contributors
-@seisfeld
-@Wimpje
-@juamiso
-executable file 136 lines (109 sloc) 5.48 KB
 #!/usr/bin/env python3
 
 # Converts text into spoken language saved to an mp3 file.
@@ -82,6 +45,7 @@ The following text-to-speech engines are supported:
 - With `--use-say` the text-to-speech engine of MacOS is used (command `say`).
 - With `--use-amazon` Amazon Polly is used. Requires the AWS CLI to be installed and configured. See: https://aws.amazon.com/cli/
 - With `--use-google-key=ABCD` Google text-to-speech is used. See: https://cloud.google.com/text-to-speech/
+
 Amazon Polly sounds best, Google text-to-speech is second, MacOS `say` sounds worst.'
 """.strip()
 
@@ -170,17 +134,3 @@ if __name__ == '__main__':
 
 
     textToSpeechUsingArgs(text=args.text, targetFile=args.output, args=args)
-© 2020 GitHub, Inc.
-Terms
-Privacy
-
-    Security
-    Status
-    Help
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
-
