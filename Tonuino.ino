@@ -554,17 +554,7 @@ static void nextTrack(uint16_t track) {
 
   Serial.println(F("=== nextTrack()"));
 
-  if (myFolder->mode == 1) {
-    if (currentTrack != numTracksInFolder && ignoreButtons == false) {
-      currentTrack = currentTrack + 1;
-      mp3.playFolderTrack(myFolder->folder, currentTrack);
-      setButtonTimer();
-    } else
-        setstandbyTimer();     
-      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
-    { }
-  }
-  if (myFolder->mode == 7) {
+  if (myFolder->mode == 1 || myFolder->mode == 7) {
     Serial.println(F("Hörspielmodus ist aktiv -> keinen neuen Track spielen"));
     setstandbyTimer();
     //    mp3.sleep(); // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
@@ -621,17 +611,8 @@ static void nextTrack(uint16_t track) {
 
 static void previousTrack() {
   Serial.println(F("=== previousTrack()"));
-  if (myFolder->mode == 1) {
-    if (currentTrack != firstTrack && ignoreButtons == false) {
-      currentTrack = currentTrack - 1;
-      mp3.playFolderTrack(myFolder->folder, currentTrack);
-      setButtonTimer();
-    } else
-        setstandbyTimer();     
-      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
-    { }
-  }
-  if (myFolder->mode == 7) {
+
+  if (myFolder->mode == 1 || myFolder->mode == 7) {
     Serial.println(F("Hörspielmodus ist aktiv -> keinen neuen Track spielen"));
     setstandbyTimer();
     //    mp3.sleep(); // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
@@ -941,20 +922,36 @@ void nextButton() {
   if (activeModifier != NULL)
     if (activeModifier->handleNextButton() == true)
       return;
-
+  if (myFolder->mode == 1) {
+    if (currentTrack != numTracksInFolder && ignoreButtons == false) {
+      currentTrack = currentTrack + 1;
+      mp3.playFolderTrack(myFolder->folder, currentTrack);
+      setButtonTimer();
+    } else
+        setstandbyTimer();     
+      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+  }
   nextTrack(random(65536));
-  delay(300);
+  delay(100);
 }
 
 void previousButton() {
   if (activeModifier != NULL)
     if (activeModifier->handlePreviousButton() == true)
       return;
-
+  if (myFolder->mode == 1) {
+    if (currentTrack != firstTrack && ignoreButtons == false) {
+      currentTrack = currentTrack - 1;
+      mp3.playFolderTrack(myFolder->folder, currentTrack);
+      setButtonTimer();
+    } else
+        setstandbyTimer();     
+      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+  }
   previousTrack();
-  delay(300);
+  delay(100);
 }
-
+  
 void playFolder() {
   Serial.println(F("== playFolder()")) ;
   disablestandbyTimer();
