@@ -52,4 +52,4 @@ if __name__ == '__main__':
             if match:
                 fileName = match.group(1)
                 text = match.group(2)
-                text_to_speech.textToSpeechUsingArgs(text=text, targetFile=targetDir + '/mp3/' + fileName, args=args)
+                text_to_speech.textToSpeechUsingArgs(text=text, targetFile=targetDir + '/' + fileName, args=args)
