@@ -27,6 +27,7 @@
 #define VOLUMEPOTENTIOMETER
 
 // delay for volume buttons
+#define LONG_PRESS_DELAY 300
 
 // uncomment the below line to flip the shutdown pin logic
 // #define POLOLUSWITCH
@@ -719,6 +720,7 @@ bool ignoreButtonFive = false;
 
 /// Timer zum deaktivieren der Tasten
 void setButtonTimer() {
+      ignorePressAtMillis = millis() + (20 * 1000);
       Serial.println(F("=== setButtonTimer"));
       Serial.println(ignorePressAtMillis);
 }
@@ -941,7 +943,7 @@ void nextButton() {
       return;
 
   nextTrack(random(65536));
-  delay(1000);
+  delay(300);
 }
 
 void previousButton() {
@@ -950,7 +952,7 @@ void previousButton() {
       return;
 
   previousTrack();
-  delay(1000);
+  delay(300);
 }
 
 void playFolder() {
