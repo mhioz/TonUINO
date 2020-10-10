@@ -24,7 +24,7 @@ sayVoiceByLang = {
     'es': 'Monica'
 }
 googleVoiceByLang = {
-    'de': { 'languageCode': 'de-DE', 'name': 'de-DE-Wavenet-C' },
+    'de': { 'languageCode': 'de-DE', 'name': 'de-DE-Wavenet-B' },
     'en': { 'languageCode': 'en-US', 'name': 'en-US-Wavenet-C' },
     'fr': { 'languageCode': 'fr-FR', 'name': 'fr-FR-Wavenet-C' },
     'nl': { 'languageCode': 'nl-NL', 'name': 'nl-NL-Wavenet-A' },
@@ -81,9 +81,9 @@ def textToSpeech(text, targetFile, lang='de', useAmazon=False, useGoogleKey=None
                 'audioConfig': {
                     'audioEncoding': 'MP3',
                     'speakingRate': 1.0,
-                    'pitch': 2.0,  # Default is 0.0
+                    'pitch': 2.5,  # Default is 0.0
                     'sampleRateHertz': 44100,
-                    'effectsProfileId': [ 'small-bluetooth-speaker-class-device' ]
+                    'effectsProfileId': [ 'medium-bluetooth-speaker-class-device' ]
                 },
                 'voice': googleVoiceByLang[lang],
                 'input': { 'text': text }
