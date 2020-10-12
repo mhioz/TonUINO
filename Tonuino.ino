@@ -849,6 +849,7 @@ void setup() {
   
 #ifdef KOPFHOERER
    pinMode(heaphonesPin, INPUT);
+   CheckHeadphones();   
 #endif
   
   mp3.setEq(DfMp3_Eq(mySettings.eq - 1));
@@ -932,9 +933,7 @@ void CheckHeadphones() {
     Serial.println(F(" = SpeakerVolume"));
     Serial.println( mySettings.maxVolume );
   }
-  //es muss noch die Lautstaerke geandert werden,
-  //Check Headphones in der Loop aufgerufen werden,
-  //geprüft werden ob sich am Kopfhöher/Speaker-Zustand überhaupt etwas geändert hat
+  //CheckVolume(); //wird schon in der Loop gemacht (bei Poti)
 }
 #endif
 
@@ -1147,9 +1146,12 @@ void loop() {
     // Buttons werden nun über JS_Button gehandelt, dadurch kann jede Taste
     // doppelt belegt werden
     readButtons();
+#ifdef KOPFHOERER     
+    CheckHeadphones();
+#endif        
 #ifdef VOLUMEPOTENTIOMETER
     CheckVolume();
-#endif    
+#endif  
     checkIgnorePressAtMillis();
 
     // admin menu
@@ -1605,6 +1607,9 @@ uint8_t voiceMenu(int numberOfOptions, int startMessage, int messageOffset,
         return optionSerial;
     }
     readButtons();
+#ifdef KOPFHOERER
+   CheckHeadphones();   
+#endif
 #ifdef VOLUMEPOTENTIOMETER
     CheckVolume();
 #endif
