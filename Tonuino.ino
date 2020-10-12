@@ -102,6 +102,10 @@ unsigned long sleepAtMillis = 0;
 unsigned long ignorePressAtMillis = 0;
 #endif
 
+#ifdef KOPFHOERER
+   uint8_t maxVolumeSpeaker;
+#endif   
+
 static uint16_t _lastTrackFinished;
 
 static void nextTrack(uint16_t track);
@@ -186,17 +190,17 @@ void resetSettings() {
   mySettings.cookie = cardCookie;
   mySettings.version = 2;
   mySettings.maxVolume = 25;
-  mySettings.minVolume = 5;
+  mySettings.minVolume = 1;
   mySettings.initVolume = 15;
   mySettings.eq = 1;
   mySettings.locked = false;
-  mySettings.standbyTimer = 0;
+  mySettings.standbyTimer = 5;
   mySettings.invertVolumeButtons = false;
   mySettings.shortCuts[0].folder = 0;
   mySettings.shortCuts[1].folder = 0;
   mySettings.shortCuts[2].folder = 0;
   mySettings.shortCuts[3].folder = 0;
-  mySettings.adminMenuLocked = 0;
+  mySettings.adminMenuLocked = 3;
   mySettings.adminMenuPin[0] = 1;
   mySettings.adminMenuPin[1] = 1;
   mySettings.adminMenuPin[2] = 1;
@@ -233,6 +237,10 @@ void loadSettingsFromFlash() {
   Serial.print(F("Maximal Volume: "));
   Serial.println(mySettings.maxVolume);
 
+#ifdef KOPFHOERER
+   maxVolumeSpeaker=mySettings.maxVolume;
+#endif   
+   
   Serial.print(F("Minimal Volume: "));
   Serial.println(mySettings.minVolume);
 
@@ -839,6 +847,9 @@ void setup() {
   mp3.setVolume(volume);
 #endif
   
+#ifdef KOPFHOERER
+   pinMode(heaphonesPin, INPUT);
+#endif
   
   mp3.setEq(DfMp3_Eq(mySettings.eq - 1));
   // Fix für das Problem mit dem Timeout (ist jetzt in Upstream daher nicht mehr nötig!)
@@ -907,6 +918,23 @@ void CheckVolume() {
     Serial.println(F(" = Volume"));
     Serial.println( volume );
   }
+}
+#endif
+
+#define KOPFHOERER
+void CheckHeadphones() {
+  if (digitalRead(headphonesPin)) {
+    mySettings.maxVolume=15;
+    Serial.println(F(" = HeadphonesVolume"));
+    Serial.println( mySettings.maxVolume );
+  } else {
+    mySettings.maxVolume=maxVolumeSpeaker;
+    Serial.println(F(" = SpeakerVolume"));
+    Serial.println( mySettings.maxVolume );
+  }
+  //es muss noch die Lautstaerke geandert werden,
+  //Check Headphones in der Loop aufgerufen werden,
+  //geprüft werden ob sich am Kopfhöher/Speaker-Zustand überhaupt etwas geändert hat
 }
 #endif
 
