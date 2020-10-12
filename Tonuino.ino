@@ -699,7 +699,7 @@ MFRC522::StatusCode status;
 #endif
 
 #ifdef KOPFHOERER
-#define heaphonesPin 8
+#define headphonesPin 8
 #endif
 
 #ifdef FIVEBUTTONS
@@ -848,7 +848,7 @@ void setup() {
 #endif
   
 #ifdef KOPFHOERER
-   pinMode(heaphonesPin, INPUT);
+   pinMode(headphonesPin, INPUT);
    CheckHeadphones();   
 #endif
   
@@ -922,7 +922,7 @@ void CheckVolume() {
 }
 #endif
 
-#define KOPFHOERER
+#ifdef KOPFHOERER
 void CheckHeadphones() {
   if (digitalRead(headphonesPin)) {
     mySettings.maxVolume=15;
