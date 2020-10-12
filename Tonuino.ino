@@ -136,6 +136,9 @@ class Mp3Notify {
       //      Serial.print("Track beendet");
       //      Serial.println(track);
       //      delay(100);
+#ifdef HOERSPIELAUSWAHL_PLUS
+      disableButtonTimer();
+#endif
       nextTrack(track);
     }
     static void OnPlaySourceOnline(DfMp3_PlaySources source) {
@@ -730,6 +733,10 @@ void checkIgnorePressAtMillis() {
   //Serial.println(F("läuft"));
   }
 }
+
+void disableButtonTimer() {
+  ignorePressAtMillis = 0;
+}
 #endif
 
 /// Funktionen für den Standby Timer (z.B. über Pololu-Switch oder Mosfet)
@@ -904,6 +911,9 @@ void CheckVolume() {
 #endif
 
 void volumeUpButton() {
+#ifdef VOLUMEPOTENTIOMETER
+   nextButton();
+#endif
 #ifndef VOLUMEPOTENTIOMETER
   if (activeModifier != NULL)
     if (activeModifier->handleVolumeUp() == true)
@@ -920,6 +930,9 @@ void volumeUpButton() {
 }
 
 void volumeDownButton() {
+#ifdef VOLUMEPOTENTIOMETER
+   previousButton();
+#endif
 #ifndef VOLUMEPOTENTIOMETER
   if (activeModifier != NULL)
     if (activeModifier->handleVolumeDown() == true)
@@ -1166,7 +1179,7 @@ void loop() {
 #ifndef FIVEBUTTONS
       if (isPlaying()) {
         if (!mySettings.invertVolumeButtons) {
-          volumeUpButton();
+          volumeUpButton();        
         }
         else {
           nextButton();
