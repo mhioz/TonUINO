@@ -926,12 +926,12 @@ void CheckVolume() {
 void CheckHeadphones() {
   if (digitalRead(headphonesPin)) {
     mySettings.maxVolume=15;
-    Serial.println(F(" = HeadphonesVolume"));
-    Serial.println( mySettings.maxVolume );
+    //Serial.println(F(" = HeadphonesVolume"));
+    //Serial.println( mySettings.maxVolume );
   } else {
     mySettings.maxVolume=maxVolumeSpeaker;
-    Serial.println(F(" = SpeakerVolume"));
-    Serial.println( mySettings.maxVolume );
+    //Serial.println(F(" = SpeakerVolume"));
+    //Serial.println( mySettings.maxVolume );
   }
   //CheckVolume(); //wird schon in der Loop gemacht (bei Poti)
 }
@@ -985,9 +985,8 @@ void nextButton() {
       currentTrack = currentTrack + 1;
       mp3.playFolderTrack(myFolder->folder, currentTrack);
       setButtonTimer();
-    } else
-        setstandbyTimer();     
-      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+    }
+  return;    
   }
 #endif
   nextTrack(random(65536));
@@ -1004,9 +1003,7 @@ void previousButton() {
       currentTrack = currentTrack - 1;
       mp3.playFolderTrack(myFolder->folder, currentTrack);
       setButtonTimer();
-    } else
-        setstandbyTimer();     
-      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+    }
   }
 #endif   
   previousTrack();
