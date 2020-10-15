@@ -26,6 +26,12 @@
 // uncomment the below line to enable potentiometer for volume control
 #define VOLUMEPOTENTIOMETER
 
+// uncomment the below line to enable hoerspielwahl by button press for some time
+#define HOERSPIELWAHL_PLUS
+
+// uncomment the below line to enable headphone detection
+#define KOPFHOERER
+
 // delay for volume buttons
 #define LONG_PRESS_DELAY 300
 
@@ -46,7 +52,9 @@ uint8_t volume;
 uint8_t lastvolume = 99;
 #endif
 
+#ifdef HOERSPIELWAHL_PLUS
 bool ignoreButtons = true;
+#endif
 
 struct folderSettings {
   uint8_t folder;
@@ -89,7 +97,15 @@ adminSettings mySettings;
 nfcTagObject myCard;
 folderSettings *myFolder;
 unsigned long sleepAtMillis = 0;
+
+#ifdef HOERSPIELWAHL_PLUS
 unsigned long ignorePressAtMillis = 0;
+#endif
+
+#ifdef KOPFHOERER
+   uint8_t maxVolumeSpeaker;
+#endif   
+
 static uint16_t _lastTrackFinished;
 
 static void nextTrack(uint16_t track);
@@ -124,6 +140,9 @@ class Mp3Notify {
       //      Serial.print("Track beendet");
       //      Serial.println(track);
       //      delay(100);
+#ifdef HOERSPIELAUSWAHL_PLUS
+      disableButtonTimer();
+#endif
       nextTrack(track);
     }
     static void OnPlaySourceOnline(DfMp3_PlaySources source) {
@@ -171,17 +190,17 @@ void resetSettings() {
   mySettings.cookie = cardCookie;
   mySettings.version = 2;
   mySettings.maxVolume = 25;
-  mySettings.minVolume = 5;
+  mySettings.minVolume = 1;
   mySettings.initVolume = 15;
   mySettings.eq = 1;
   mySettings.locked = false;
-  mySettings.standbyTimer = 0;
+  mySettings.standbyTimer = 5;
   mySettings.invertVolumeButtons = false;
   mySettings.shortCuts[0].folder = 0;
   mySettings.shortCuts[1].folder = 0;
   mySettings.shortCuts[2].folder = 0;
   mySettings.shortCuts[3].folder = 0;
-  mySettings.adminMenuLocked = 0;
+  mySettings.adminMenuLocked = 3;
   mySettings.adminMenuPin[0] = 1;
   mySettings.adminMenuPin[1] = 1;
   mySettings.adminMenuPin[2] = 1;
@@ -218,6 +237,10 @@ void loadSettingsFromFlash() {
   Serial.print(F("Maximal Volume: "));
   Serial.println(mySettings.maxVolume);
 
+#ifdef KOPFHOERER
+   maxVolumeSpeaker=mySettings.maxVolume;
+#endif   
+   
   Serial.print(F("Minimal Volume: "));
   Serial.println(mySettings.minVolume);
 
@@ -611,12 +634,10 @@ static void nextTrack(uint16_t track) {
 
 static void previousTrack() {
   Serial.println(F("=== previousTrack()"));
-
-  if (myFolder->mode == 1 || myFolder->mode == 7) {
-    Serial.println(F("Hörspielmodus ist aktiv -> keinen neuen Track spielen"));
-    setstandbyTimer();
-    //    mp3.sleep(); // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
-  }
+  /*  if (myCard.mode == 1 || myCard.mode == 7) {
+      Serial.println(F("Hörspielmodus ist aktiv -> Track von vorne spielen"));
+      mp3.playFolderTrack(myCard.folder, currentTrack);
+    }*/
   if (myFolder->mode == 2 || myFolder->mode == 8) {
     Serial.println(F("Albummodus ist aktiv -> vorheriger Track"));
     if (currentTrack != firstTrack) {
@@ -676,6 +697,10 @@ MFRC522::StatusCode status;
 #define volumeADC A7
 #endif
 
+#ifdef KOPFHOERER
+#define headphonesPin 8
+#endif
+
 #ifdef FIVEBUTTONS
 #define buttonFourPin A3
 #define buttonFivePin A4
@@ -698,7 +723,7 @@ bool ignoreButtonFour = false;
 bool ignoreButtonFive = false;
 #endif
 
-
+#ifdef HOERSPIELWAHL_PLUS
 /// Timer zum deaktivieren der Tasten
 void setButtonTimer() {
       ignorePressAtMillis = millis() + (20 * 1000);
@@ -715,6 +740,12 @@ void checkIgnorePressAtMillis() {
   //Serial.println(F("läuft"));
   }
 }
+
+void disableButtonTimer() {
+  ignorePressAtMillis = 0;
+}
+#endif
+
 /// Funktionen für den Standby Timer (z.B. über Pololu-Switch oder Mosfet)
 
 void setstandbyTimer() {
@@ -815,6 +846,10 @@ void setup() {
   mp3.setVolume(volume);
 #endif
   
+#ifdef KOPFHOERER
+   pinMode(headphonesPin, INPUT);
+   CheckHeadphones();   
+#endif
   
   mp3.setEq(DfMp3_Eq(mySettings.eq - 1));
   // Fix für das Problem mit dem Timeout (ist jetzt in Upstream daher nicht mehr nötig!)
@@ -886,7 +921,25 @@ void CheckVolume() {
 }
 #endif
 
+#ifdef KOPFHOERER
+void CheckHeadphones() {
+  if (digitalRead(headphonesPin)) {
+    mySettings.maxVolume=15;
+    //Serial.println(F(" = HeadphonesVolume"));
+    //Serial.println( mySettings.maxVolume );
+  } else {
+    mySettings.maxVolume=maxVolumeSpeaker;
+    //Serial.println(F(" = SpeakerVolume"));
+    //Serial.println( mySettings.maxVolume );
+  }
+  //CheckVolume(); //wird schon in der Loop gemacht (bei Poti)
+}
+#endif
+
 void volumeUpButton() {
+#ifdef VOLUMEPOTENTIOMETER
+   nextButton();
+#endif
 #ifndef VOLUMEPOTENTIOMETER
   if (activeModifier != NULL)
     if (activeModifier->handleVolumeUp() == true)
@@ -903,6 +956,9 @@ void volumeUpButton() {
 }
 
 void volumeDownButton() {
+#ifdef VOLUMEPOTENTIOMETER
+   previousButton();
+#endif
 #ifndef VOLUMEPOTENTIOMETER
   if (activeModifier != NULL)
     if (activeModifier->handleVolumeDown() == true)
@@ -922,15 +978,16 @@ void nextButton() {
   if (activeModifier != NULL)
     if (activeModifier->handleNextButton() == true)
       return;
-  if (myFolder->mode == 1) {
+#ifdef HOERSPIELWAHL_PLUS
+    if (myFolder->mode == 1) {
     if (currentTrack != numTracksInFolder && ignoreButtons == false) {
       currentTrack = currentTrack + 1;
       mp3.playFolderTrack(myFolder->folder, currentTrack);
       setButtonTimer();
-    } else
-        setstandbyTimer();     
-      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+    }
+  return;    
   }
+#endif
   nextTrack(random(65536));
   delay(100);
 }
@@ -939,19 +996,19 @@ void previousButton() {
   if (activeModifier != NULL)
     if (activeModifier->handlePreviousButton() == true)
       return;
+#ifdef HOERSPIELWAHL_PLUS
   if (myFolder->mode == 1) {
     if (currentTrack != firstTrack && ignoreButtons == false) {
       currentTrack = currentTrack - 1;
       mp3.playFolderTrack(myFolder->folder, currentTrack);
       setButtonTimer();
-    } else
-        setstandbyTimer();     
-      //      mp3.sleep();   // Je nach Modul kommt es nicht mehr zurück aus dem Sleep!
+    }
   }
+#endif   
   previousTrack();
   delay(100);
 }
-  
+
 void playFolder() {
   Serial.println(F("== playFolder()")) ;
   disablestandbyTimer();
@@ -967,7 +1024,9 @@ void playFolder() {
   if (myFolder->mode == 1) {
     Serial.println(F("Hörspielmodus -> zufälligen Track wiedergeben"));
     currentTrack = random(1, numTracksInFolder + 1);
+#ifdef HOERSPIELWAHL_PLUS
     setButtonTimer();
+#endif
     Serial.println(currentTrack);
     mp3.playFolderTrack(myFolder->folder, currentTrack);
   }
@@ -979,7 +1038,8 @@ void playFolder() {
   }
   // Party Modus: Ordner in zufälliger Reihenfolge
   if (myFolder->mode == 3) {
-    Serial.println(F("Party Modus -> Ordner in zufälliger Reihenfolge wiedergeben"));
+    Serial.println(
+      F("Party Modus -> Ordner in zufälliger Reihenfolge wiedergeben"));
     shuffleQueue();
     currentTrack = 1;
     mp3.playFolderTrack(myFolder->folder, queue[currentTrack - 1]);
@@ -1083,9 +1143,12 @@ void loop() {
     // Buttons werden nun über JS_Button gehandelt, dadurch kann jede Taste
     // doppelt belegt werden
     readButtons();
+#ifdef KOPFHOERER     
+    CheckHeadphones();
+#endif        
 #ifdef VOLUMEPOTENTIOMETER
     CheckVolume();
-#endif    
+#endif  
     checkIgnorePressAtMillis();
 
     // admin menu
@@ -1541,6 +1604,9 @@ uint8_t voiceMenu(int numberOfOptions, int startMessage, int messageOffset,
         return optionSerial;
     }
     readButtons();
+#ifdef KOPFHOERER
+   CheckHeadphones();   
+#endif
 #ifdef VOLUMEPOTENTIOMETER
     CheckVolume();
 #endif
