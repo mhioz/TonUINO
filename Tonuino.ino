@@ -634,11 +634,10 @@ static void nextTrack(uint16_t track) {
 
 static void previousTrack() {
   Serial.println(F("=== previousTrack()"));
-  if (myFolder->mode == 1 || myFolder->mode == 7) {
-    Serial.println(F("Hörspielmodus ist aktiv -> keinen Track zurückspringen"));
-/*    Serial.println(F("Hörspielmodus ist aktiv -> Track von vorne spielen"));
-    mp3.playFolderTrack(myCard.folder, currentTrack);*/
-  }
+  /*  if (myCard.mode == 1 || myCard.mode == 7) {
+      Serial.println(F("Hörspielmodus ist aktiv -> Track von vorne spielen"));
+      mp3.playFolderTrack(myCard.folder, currentTrack);
+    }*/
   if (myFolder->mode == 2 || myFolder->mode == 8) {
     Serial.println(F("Albummodus ist aktiv -> vorheriger Track"));
     if (currentTrack != firstTrack) {
@@ -1039,7 +1038,8 @@ void playFolder() {
   }
   // Party Modus: Ordner in zufälliger Reihenfolge
   if (myFolder->mode == 3) {
-    Serial.println(F("Party Modus -> Ordner in zufälliger Reihenfolge wiedergeben"));
+    Serial.println(
+      F("Party Modus -> Ordner in zufälliger Reihenfolge wiedergeben"));
     shuffleQueue();
     currentTrack = 1;
     mp3.playFolderTrack(myFolder->folder, queue[currentTrack - 1]);
@@ -1206,7 +1206,7 @@ void loop() {
 #ifndef FIVEBUTTONS
       if (isPlaying()) {
         if (!mySettings.invertVolumeButtons) {
-          volumeUpButton();        
+          volumeUpButton();
         }
         else {
           nextButton();
