@@ -1148,8 +1148,10 @@ void loop() {
 #endif        
 #ifdef VOLUMEPOTENTIOMETER
     CheckVolume();
-#endif  
+#endif
+#ifdef HOERSPIELWAHL_PLUS
     checkIgnorePressAtMillis();
+#endif
 
     // admin menu
     if ((pauseButton.pressedFor(LONG_PRESS) || upButton.pressedFor(LONG_PRESS) || downButton.pressedFor(LONG_PRESS)) && pauseButton.isPressed() && upButton.isPressed() && downButton.isPressed()) {
