@@ -31,6 +31,7 @@
 
 // uncomment the below line to enable headphone detection
 #define KOPFHOERER
+#define MAXVOLUMEHEADPHONES 15
 
 // delay for volume buttons
 #define LONG_PRESS_DELAY 300
@@ -924,7 +925,7 @@ void CheckVolume() {
 #ifdef KOPFHOERER
 void CheckHeadphones() {
   if (digitalRead(headphonesPin)) {
-    mySettings.maxVolume=15;
+    mySettings.maxVolume=MAXVOLUMEHEADPHONES;
     //Serial.println(F(" = HeadphonesVolume"));
     //Serial.println( mySettings.maxVolume );
   } else {
