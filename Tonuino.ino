@@ -851,7 +851,7 @@ void setup() {
    CheckHeadphones();   
 #endif
   
-  mp3.setEq(mySettings.eq - 1);
+  mp3.setEq(DfMp3_Eq(mySettings.eq - 1));
   // Fix für das Problem mit dem Timeout (ist jetzt in Upstream daher nicht mehr nötig!)
   //mySoftwareSerial.setTimeout(10000);
 
@@ -989,7 +989,7 @@ void nextButton() {
   }
 #endif
   nextTrack(random(65536));
-  delay(100);
+  delay(1000);
 }
 
 void previousButton() {
@@ -1006,7 +1006,7 @@ void previousButton() {
   }
 #endif   
   previousTrack();
-  delay(100);
+  delay(1000);
 }
 
 void playFolder() {
