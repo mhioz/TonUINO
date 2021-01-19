@@ -767,9 +767,9 @@ void checkStandbyAtMillis() {
     Serial.println(F("=== power off!"));
     // enter sleep state
 #if defined POLOLUSWITCH
-        digitalWrite(shutdownPin, HIGH);
+    digitalWrite(shutdownPin, HIGH);
 #else
-        digitalWrite(shutdownPin, LOW);
+    digitalWrite(shutdownPin, LOW);
 #endif
     delay(500);
 
@@ -851,7 +851,7 @@ void setup() {
    CheckHeadphones();   
 #endif
   
-  mp3.setEq(DfMp3_Eq(mySettings.eq - 1));
+  mp3.setEq(mySettings.eq - 1);
   // Fix für das Problem mit dem Timeout (ist jetzt in Upstream daher nicht mehr nötig!)
   //mySoftwareSerial.setTimeout(10000);
 
@@ -1289,7 +1289,7 @@ void loop() {
 
 #ifndef PAUSEONCARDREMOVAL
   } while (!mfrc522.PICC_IsNewCardPresent());
-  
+
   // RFID Karte wurde aufgelegt
   if (!mfrc522.PICC_ReadCardSerial())
     return;
@@ -1298,7 +1298,7 @@ void loop() {
     if (myCard.cookie == cardCookie && myCard.nfcFolderSettings.folder != 0 && myCard.nfcFolderSettings.mode != 0) {
       playFolder();
     }
-  
+
     // Neue Karte konfigurieren
     else if (myCard.cookie != cardCookie) {
       knownCard = false;
@@ -1616,6 +1616,7 @@ uint8_t voiceMenu(int numberOfOptions, int startMessage, int messageOffset,
     if (pauseButton.pressedFor(LONG_PRESS)) {
       mp3.playMp3FolderTrack(802);
       ignorePauseButton = true;
+      checkStandbyAtMillis();
       return defaultValue;
     }
     if (pauseButton.wasReleased()) {
@@ -1958,6 +1959,8 @@ void writeCard(nfcTagObject nfcTag) {
                      nfcTag.nfcFolderSettings.special2,
                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
                     };
+
+  byte size = sizeof(buffer);
 
   mifareType = mfrc522.PICC_GetType(mfrc522.uid.sak);
 
